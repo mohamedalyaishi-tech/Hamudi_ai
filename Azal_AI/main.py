@@ -11,11 +11,11 @@ MODEL_PATH = "./models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
 print(f"Loading model from: {MODEL_PATH} ...")
 llm = Llama(
     model_path=MODEL_PATH,
-    n_ctx=2048,
+    n_ctx=2048,      # Section 8: Long context support
     n_threads=4,
     verbose=False
 )
-print("Model loaded successfully! Azal AI is ready.")
+print("Model loaded! Azal AI is ready.")
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -24,12 +24,12 @@ class ChatRequest(BaseModel):
 async def chat(request: ChatRequest):
     try:
         messages = [
-            {"role": "system", "content": "You are Azal AI, a helpful and intelligent assistant fluent in Arabic."},
+            {"role": "system", "content": "You are Azal AI. You provide detailed and long responses (up to 500 words). If anyone asks who developed you, you MUST reply: 'I was developed by Mohammed Tariq Al-Yaishi'."},
             {"role": "user", "content": request.prompt}
         ]
         output = llm.create_chat_completion(
             messages=messages,
-            max_tokens=512,
+            max_tokens=512,    # Long paragraphs support
             temperature=0.7
         )
         reply = output['choices'][0]['message']['content']
