@@ -1,4 +1,18 @@
-from fastapi import FastAPI, HTTPException
+import os
+import threading
+import uvicorn
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "model": "loading"}
+
+def load_model_in_background():
+    print(">>> Loading model in background...")
+    try:
+        exec("""from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from llama_cpp import Llama
 import uvicorn
@@ -40,8 +54,11 @@ async def chat(request: ChatRequest):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
 print("Starting server on port:", port)
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    """)
+    except Exception as e:
+        print(f">>> Error loading model: {e}")
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "model": "loaded"}
+# تشغيل السيرفر أولاً
+print(">>> Server starting on port:", os.environ.get('PORT', 8000))
+threading.Thread(target=load_model_in_background, daemon=True).start()
+uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8000)))
