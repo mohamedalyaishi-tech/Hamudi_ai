@@ -1,0 +1,1 @@
+Azal_AI/models/*.gguf filter=lfs diff=lfs merge=lfs -text
