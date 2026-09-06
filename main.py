@@ -2,8 +2,11 @@ import os
 import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from smart_processor import SmartProcessor
+from rate_limiter import safe_groq_request
 
 app = FastAPI()
+processor = SmartProcessor(max_tokens_per_chunk=400)
 
 # المفتاح الجديد والمحدث
 GROQ_API_KEY = "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"
