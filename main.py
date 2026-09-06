@@ -7,7 +7,7 @@ app = FastAPI()
 
 # المفتاح الجديد والمحدث
 GROQ_API_KEY = "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"
-GROQ_MODEL = "qwen2.5-72b-instruct"
+GROQ_MODEL = "qwen/qwen3.8-27b"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 class ChatRequest(BaseModel):
