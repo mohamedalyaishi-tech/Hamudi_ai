@@ -1,64 +1,46 @@
 import os
-import threading
-import uvicorn
-from fastapi import FastAPI
+import httpx
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 app = FastAPI()
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "model": "loading"}
-
-def load_model_in_background():
-    print(">>> Loading model in background...")
-    try:
-        exec("""from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from llama_cpp import Llama
-import uvicorn
-import os
-
-app = FastAPI(title="Azal AI Server")
-
-MODEL_PATH = "./models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
-
-print(f"Loading model from: {MODEL_PATH} ...")
-llm = Llama(
-    model_path=MODEL_PATH,
-    n_ctx=2048,      # Section 8: Long context support
-    n_threads=4,
-    verbose=False
-)
-print("Model loaded! Azal AI is ready.")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_MODEL = "qwen2.5-72b-instruct"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 class ChatRequest(BaseModel):
-    prompt: str
+    message: str
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "model": GROQ_MODEL}
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    try:
-        messages = [
-            {"role": "system", "content": "You are Azal AI. You provide detailed and long responses (up to 500 words). If anyone asks who developed you, you MUST reply: 'I was developed by Mohammed Tariq Al-Yaishi'."},
-            {"role": "user", "content": request.prompt}
-        ]
-        output = llm.create_chat_completion(
-            messages=messages,
-            max_tokens=512,    # Long paragraphs support
-            temperature=0.7
+    if not GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="Groq API Key missing")
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            GROQ_URL,
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": "أنت أزال AI، مساعد ذكي ومتخصص."},
+                    {"role": "user", "content": request.message}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1024
+            }
         )
-        reply = output['choices'][0]['message']['content']
-        return {"reply": reply.strip()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    if response.status_code == 200:
+        return {"reply": response.json()["choices"][0]["message"]["content"]}
+    else:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-print("Starting server on port:", port)
-    """)
-    except Exception as e:
-        print(f">>> Error loading model: {e}")
-
-# تشغيل السيرفر أولاً
-print(">>> Server starting on port:", os.environ.get('PORT', 8000))
-threading.Thread(target=load_model_in_background, daemon=True).start()
-uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8000)))
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
