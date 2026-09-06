@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_API_KEY = "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"
 GROQ_MODEL = "qwen2.5-72b-instruct"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
