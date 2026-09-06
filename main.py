@@ -5,11 +5,12 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-# المفتاح مكتوب مباشرة لضمان عمله 100%
 GROQ_API_KEY = "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"
-
 GROQ_MODEL = "qwen2.5-72b-instruct"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+# طباعة للتأكد إن المفتاح تم تحميله (راح تظهر في لوجات Render)
+print(f"DEBUG: API Key loaded: {GROQ_API_KEY[:10]}...")
 
 class ChatRequest(BaseModel):
     message: str
@@ -20,6 +21,8 @@ def health_check():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
+    print(f"DEBUG: Received request for message: {request.message}")
+    
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="Groq API Key missing")
 
@@ -37,11 +40,14 @@ async def chat(request: ChatRequest):
                 "max_tokens": 1024
             }
         )
+        
+    print(f"DEBUG: Groq Response Status: {response.status_code}")
 
     if response.status_code == 200:
         return {"reply": response.json()["choices"][0]["message"]["content"]}
     else:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
+        # إرجاع تفاصيل الخطأ من Groq لنا
+        return {"error": response.text}
 
 if __name__ == "__main__":
     import uvicorn
