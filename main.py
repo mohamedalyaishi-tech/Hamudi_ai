@@ -5,12 +5,10 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-GROQ_API_KEY = "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"
+# المفتاح الجديد والمحدث
+GROQ_API_KEY = "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"
 GROQ_MODEL = "qwen2.5-72b-instruct"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-# طباعة للتأكد إن المفتاح تم تحميله (راح تظهر في لوجات Render)
-print(f"DEBUG: API Key loaded: {GROQ_API_KEY[:10]}...")
 
 class ChatRequest(BaseModel):
     message: str
@@ -21,8 +19,6 @@ def health_check():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    print(f"DEBUG: Received request for message: {request.message}")
-    
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="Groq API Key missing")
 
@@ -33,20 +29,18 @@ async def chat(request: ChatRequest):
             json={
                 "model": GROQ_MODEL,
                 "messages": [
-                    {"role": "system", "content": "أنت أزال AI، مساعد ذكي ومتخصص."},
+                    # هنا تم تعديل رد المطور كما طلبت
+                    {"role": "system", "content": "أنت أزال AI، مساعد ذكي ومتخصص. تم تطويرك بواسطة محمد طارق اليعيشي."},
                     {"role": "user", "content": request.message}
                 ],
                 "temperature": 0.7,
                 "max_tokens": 1024
             }
         )
-        
-    print(f"DEBUG: Groq Response Status: {response.status_code}")
 
     if response.status_code == 200:
         return {"reply": response.json()["choices"][0]["message"]["content"]}
     else:
-        # إرجاع تفاصيل الخطأ من Groq لنا
         return {"error": response.text}
 
 if __name__ == "__main__":
